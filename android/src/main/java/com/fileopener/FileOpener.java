@@ -1,16 +1,19 @@
 package com.fileopener;
 
-
 import java.io.File;
 
 import android.app.Activity;
-import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
+import android.content.pm.ResolveInfo;
+import android.content.ComponentName;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.os.Build;
 import android.support.v4.content.FileProvider;
+
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,12 +28,11 @@ import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
 
 public class FileOpener extends ReactContextBaseJavaModule {
-  
   private Context context;
 
   public FileOpener(ReactApplicationContext reactContext) {
@@ -53,24 +55,30 @@ public class FileOpener extends ReactContextBaseJavaModule {
   public void open(String fileArg, String contentType, Promise promise) throws JSONException {
   		File file = new File(fileArg);
 
-  		if (file.exists()) {
-  			try {
-          Uri path = FileProvider.getUriForFile(getReactApplicationContext(), getReactApplicationContext().getPackageName() + ".fileprovider", file);
+  		if (file.exists()) {  			try {
+  				Uri path = Uri.fromFile(file);
   				Intent intent = new Intent(Intent.ACTION_VIEW);
-  				intent.setDataAndType(path, contentType);
-          intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-          intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                if (Build.VERSION.SDK_INT >= 24) {
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    Uri contentUri = FileProvider.getUriForFile(getReactApplicationContext(), getReactApplicationContext().getPackageName() + ".fileprovider", file);
+                    intent.setDataAndType(contentUri, contentType);
+                } else {
+                    intent.setDataAndType(path, contentType);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                }
+
   				getReactApplicationContext().startActivity(intent);
 
-                promise.resolve("Open success!!");
+          promise.resolve("Open success!!");
   			} catch (android.content.ActivityNotFoundException e) {
-                promise.reject("Open error!!");
+          promise.reject("Open error!!");
   			}
   		} else {
-            promise.reject("File not found");
+          promise.reject("File not found");
   		}
   	}
-  
+
     @ReactMethod
     public void openApp(String packagename, Promise promise) throws JSONException {
        PackageInfo packageinfo = null;  
