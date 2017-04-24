@@ -30,9 +30,12 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class FileOpener extends ReactContextBaseJavaModule {
+  
+  private Context context;
 
   public FileOpener(ReactApplicationContext reactContext) {
     super(reactContext);
+    context = reactContext;
   }
 
   @Override
