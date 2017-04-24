@@ -62,5 +62,61 @@ public class FileOpener extends ReactContextBaseJavaModule {
             promise.reject("File not found");
   		}
   	}
+  
+    @ReactMethod
+    public void openApp(String packagename, Promise promise) throws JSONException {
+       PackageInfo packageinfo = null;  
+        try {
+          packageinfo = context.getPackageManager().getPackageInfo(packagename, 0);
 
+          if (packageinfo == null) {
+            promise.reject("Open error!!");
+          } else {
+            // 创建一个类别为CATEGORY_LAUNCHER的该包名的Intent 
+            Intent resolveIntent = new Intent(Intent.ACTION_MAIN, null);  
+            resolveIntent.addCategory(Intent.CATEGORY_LAUNCHER);  
+            resolveIntent.setPackage(packageinfo.packageName);  
+
+            // 通过getPackageManager()的queryIntentActivities方法遍历 
+            List<ResolveInfo> resolveinfoList = context.getPackageManager()  
+                    .queryIntentActivities(resolveIntent, 0);  
+
+            ResolveInfo resolveinfo = resolveinfoList.iterator().next();  
+            if (resolveinfo != null) {  
+                // packagename = 参数packname 
+                String packageName = resolveinfo.activityInfo.packageName;  
+                // 这个就是我们要找的该APP的LAUNCHER的Activity[组织形式：packagename.mainActivityname] 
+                String className = resolveinfo.activityInfo.name;  
+                // LAUNCHER Intent 
+                Intent intent = new Intent(Intent.ACTION_MAIN);  
+                intent.addCategory(Intent.CATEGORY_LAUNCHER);  
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                // 设置ComponentName参数1:packagename参数2:MainActivity路径 
+                ComponentName cn = new ComponentName(packageName, className);  
+
+                intent.setComponent(cn);  
+                getReactApplicationContext().startActivity(intent);  
+            }
+            promise.resolve("Open success!!"); 
+          }          
+        } catch (NameNotFoundException e) {  
+          promise.reject("Open error!!");
+          // e.printStackTrace();
+        }  
+    }
+
+    @ReactMethod
+    public void isInstalledApp(String packagename, Promise promise) throws JSONException {
+       PackageInfo packageinfo = null;  
+        try {
+          packageinfo = context.getPackageManager().getPackageInfo(packagename, 0);
+          if (packageinfo == null) {
+            promise.reject("Open error!!");
+          } else {            
+            promise.resolve("Open success!!"); 
+          }          
+        } catch (NameNotFoundException e) {  
+          promise.reject("Open error!!");          
+        }  
+    }
 }
